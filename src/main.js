@@ -19,12 +19,13 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
+
+const vueApp = createApp(App);
+vueApp.use(router);
+vueApp.mount("#app");
+
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 
 export const db = getFirestore(app);
-
-const vueApp = createApp(App);
 vueApp.config.globalProperties.$analytics = analytics;
-vueApp.use(router);
-vueApp.mount("#app");
