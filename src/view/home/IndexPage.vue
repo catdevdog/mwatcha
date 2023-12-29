@@ -13,9 +13,10 @@
 import { onMounted } from "vue";
 // import { getChannelPlaylists } from "@/api/index";
 import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/main";
+import { initFirebase } from "@/firebase";
 
 onMounted(async () => {
+  const { db } = initFirebase();
   const querySnapshot = await getDocs(collection(db, "test"));
   querySnapshot.forEach((doc) => {
     console.log(`${doc.id} => ${doc.data()}`);
