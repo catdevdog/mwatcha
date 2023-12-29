@@ -11,11 +11,17 @@
 </template>
 <script setup>
 import { onMounted } from "vue";
-import { getChannelPlaylists } from "@/api/index";
+// import { getChannelPlaylists } from "@/api/index";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/main";
 
 onMounted(async () => {
-  const result = await getChannelPlaylists();
-  console.log(result);
+  const querySnapshot = await getDocs(collection(db, "test"));
+  querySnapshot.forEach((doc) => {
+    console.log(`${doc.id} => ${doc.data()}`);
+    const result = doc.data();
+    console.log(result);
+  });
 });
 </script>
 <style lang="scss"></style>
