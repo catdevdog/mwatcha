@@ -5,6 +5,7 @@ import router from "./router";
 import "./assets/styles/common.scss";
 
 import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -18,11 +19,12 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+
+export const db = getFirestore(app);
 
 const vueApp = createApp(App);
-
+vueApp.config.globalProperties.$analytics = analytics;
 vueApp.use(router);
 vueApp.mount("#app");
-
-const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app);
