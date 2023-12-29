@@ -18,7 +18,7 @@ const firebaseConfig = {
   measurementId: process.env.VUE_APP_FIREBASE_MEASUREMENT_ID,
 };
 
-// Initialize Firebase
+// Initialize Firebased
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 
