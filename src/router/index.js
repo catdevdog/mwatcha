@@ -5,7 +5,7 @@ const router = createRouter({
   routes: [
     {
       path: "/",
-      // component: () => import('@/components/layouts/Login/LoginLayout.vue'),
+      component: () => import("@/components/layouts/DefaultLayout.vue"),
       children: [
         // main
         {
@@ -23,4 +23,8 @@ const router = createRouter({
   ],
 });
 
+router.afterEach((to, from) => {
+  const title = to.meta.title || "뫗챠!";
+  if (title) document.title = title;
+});
 export default router;
