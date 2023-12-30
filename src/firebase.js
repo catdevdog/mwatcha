@@ -16,7 +16,7 @@ const firebaseConfig = {
 
 // Firebase 초기화 함수
 export const initFirebase = () => {
-  console.log("firebase----initFirebase");
+  console.log("firebase----initFirebase", process.env);
   const app = initializeApp(firebaseConfig);
   const analytics = getAnalytics(app);
   const db = getFirestore(app);
