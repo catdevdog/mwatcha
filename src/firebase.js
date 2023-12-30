@@ -2,7 +2,7 @@ import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getFirestore } from "firebase/firestore";
 
-console.log("firebase----fonfig");
+console.log("firebase----config");
 
 const firebaseConfig = {
   apiKey: process.env.VUE_APP_FIREBASE_API_KEY,
@@ -21,6 +21,7 @@ export const initFirebase = () => {
   const analytics = getAnalytics(app);
   const db = getFirestore(app);
 
+  console.log("firebase----initFirebase---end");
   // 필요한 Firebase 서비스만 반환
   return { analytics, db };
 };
