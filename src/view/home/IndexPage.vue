@@ -11,14 +11,13 @@
   </div>
 </template>
 <script setup>
-import { onMounted } from "vue";
+import { onMounted, getCurrentInstance } from "vue";
 // import { getChannelPlaylists } from "@/api/index";
 import { collection, getDocs } from "firebase/firestore";
-import { initFirebase } from "@/firebase";
 
 onMounted(async () => {
-  const { db } = initFirebase();
-  const querySnapshot = await getDocs(collection(db, "test"));
+  const { proxy } = getCurrentInstance();
+  const querySnapshot = await getDocs(collection(proxy.$db, "test"));
   querySnapshot.forEach((doc) => {
     console.log(`${doc.id} => ${doc.data()}`);
     const result = doc.data();
