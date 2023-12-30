@@ -2,8 +2,6 @@ import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getFirestore } from "firebase/firestore";
 
-console.log("firebase----config");
-
 const firebaseConfig = {
   apiKey: process.env.VUE_APP_FIREBASE_API_KEY,
   authDomain: process.env.VUE_APP_FIREBASE_AUTH_DOMAIN,
@@ -16,12 +14,10 @@ const firebaseConfig = {
 
 // Firebase 초기화 함수
 export const initFirebase = () => {
-  console.log("firebase----initFirebase", process.env);
   const app = initializeApp(firebaseConfig);
   const analytics = getAnalytics(app);
   const db = getFirestore(app);
 
-  console.log("firebase----initFirebase---end");
   // 필요한 Firebase 서비스만 반환
   return { analytics, db };
 };
