@@ -7,7 +7,10 @@ const mwa = axios.create({
   // },
 });
 
+// cost per day limit - 10,000
+
 export const getSearchVideos = async (count) => {
+  // cost : 100
   try {
     const response = await mwa.get("search", {
       params: {
