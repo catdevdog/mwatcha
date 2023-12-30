@@ -29,13 +29,12 @@ export const getSearchVideos = async (count) => {
   }
 };
 
-export const getChannelVideos = async (id, count) => {
+export const getChannelVideos = async (param) => {
+  // cost : 1
   try {
     const response = await mwa.get("playlistItems", {
       params: {
-        part: "contentDetails",
-        playlistId: id,
-        maxResults: count,
+        ...param,
         key: process.env.VUE_APP_YT_API_KEY,
       },
     });
@@ -47,13 +46,12 @@ export const getChannelVideos = async (id, count) => {
   }
 };
 
-export const getChannelPlaylists = async () => {
+export const getChannelPlaylists = async (param) => {
+  // cost : 1
   try {
     const response = await mwa.get("playlists", {
       params: {
-        part: "snippet",
-        channelId: process.env.VUE_APP_CH_ID_MAMWA,
-        maxResults: 20,
+        ...param,
         key: process.env.VUE_APP_YT_API_KEY,
       },
     });
