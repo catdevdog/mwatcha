@@ -10,17 +10,22 @@ import {
   limit,
   startAfter,
   query,
+  updateDoc,
 } from "firebase/firestore";
 import { initFirebase } from "@/firebase";
 import MwaPlaylist from "@/components/MwaPlaylist.vue";
+import { compareTimestamps, getTimeDiffHour } from "@/store/index";
 
 const { db } = initFirebase();
 // .doc("bucket_item").update({ name: 'duck2' });
 
 const channelList = ref([]);
 const playList = ref([]);
+const updateDelay = ref(24);
+const updateDate = ref(0);
+
 /**
- * 
+ *
     {name: '1분 마뫄', id: 'UC5rZJy3Neujs6jQPtZdFZlQ'}
     {name: '마뫄', id: 'UCgEo04TieA9BEmiDOhYQUGw'}
  */
@@ -38,6 +43,13 @@ const init = async () => {
   playListSnap.forEach((item) => {
     if (item.data().open) playList.value.push(item.data());
   });
+  await onGetPlayList();
+};
+
+const onUpdateDt = async (channel) => {
+  await updateDoc(doc(db, "CHANNEL_ID", channel.id), {
+    lastUpdateDt: +new Date(),
+  });
 };
 
 const onGetPlayList = async () => {
@@ -47,53 +59,67 @@ const onGetPlayList = async () => {
       channelId: channel.id,
       maxResults: 20,
     };
-    console.log(channel.update);
-    if (!channel.update) {
-      console.log(channel.update);
-      const playList = await getChannelPlaylists(param);
-      onSetPlayListData(playList, channel);
+
+    // 페이지 진입 시 channel 컬렉션에 lastUpdateDt 값 조회 후 현재 시스템 시각과 비교 > 6시간 이상 차이나면 false
+    // -> 조회 완료 후 update값 true로 변경
+    if (
+      compareTimestamps(channel.lastUpdateDt, +new Date(), updateDelay.value)
+    ) {
+      // updateDelay보다 큰 경우(업데이트 필요 한 경우)
+      onSetPlayListData(playList.value, channel);
+      console.log("조회 완료");
     } else {
-      // 페이지 진입 시 channel 컬렉션에 lastUpdateDt 값 조회 후 현재 시스템 시각과 비교 > 6시간 이상 차이나면 false
-      // -> 조회 완료 후 update값 true로 변경
-      console.log("업데이트 완료");
+      updateDate.value = channel.lastUpdateDt;
+      console.log(
+        `${channel.name} 채널 - 마지막 업데이트 ${new Date(
+          channel.lastUpdateDt
+        )}`
+      );
+      console.log(
+        `${channel.name} 채널 - ${updateDelay.value}시간 내 업데이트 기록이 있습니다.`
+      );
     }
   });
 };
 
 const onSetPlayListData = async (list, channel) => {
+  onUpdateDt(channel); // 채널 업데이트
   list.forEach(async (playList) => {
     const param = {
-      part: "snippet",
+      part: "snippet,contentDetails",
       playlistId: playList.id,
       maxResults: 50,
     };
 
     const videos = [];
     const result = await getChannelVideos(param);
-    console.log(result);
+    // console.log(result);
 
     result.forEach((video) => {
-      videos.push({
-        channel: channel.name,
-        channelId: channel.id,
-        playlistId: video.snippet.playlistId,
-        title: video.snippet.title,
-        id: video.snippet.resourceId.videoId,
-        thumbnail:
-          video.snippet.thumbnails?.maxres?.url ??
-          video.snippet.thumbnails?.standard?.url ??
-          "",
-        date: video.snippet.publishedAt,
-        description: playList.snippet.localized.description,
-      });
+      if (Object.keys(video).length) {
+        videos.push({
+          channel: channel.name,
+          channelId: channel.id,
+          playlistId: video.snippet.playlistId,
+          title: video.snippet.title,
+          id: video.snippet.resourceId.videoId,
+          thumbnail:
+            video.snippet.thumbnails?.maxres?.url ??
+            video.snippet.thumbnails?.standard?.url ??
+            "",
+          date: video.snippet.publishedAt,
+          ...video.detail,
+        });
+      }
     });
+    // 플레이리스트 컬렉션에 추가
     await setDoc(doc(db, "PLAYLIST", playList.id), {
       channel: channel.name,
       channelId: channel.id,
       count: videos.length,
       id: playList.id,
-      name: playList.snippet.localized.title,
-      description: playList.snippet.localized.description,
+      name: playList.name,
+      description: playList.description,
       open: channel.open,
     });
 
@@ -105,7 +131,7 @@ const onSetVideos = async (videos) => {
   videos.forEach(async (video) => {
     await setDoc(doc(db, "VIDEOS", video.id), {
       ...video,
-      view: 0,
+      viewCount: Number(video.viewCount),
     });
   });
 };
@@ -116,23 +142,43 @@ onMounted(async () => {
 </script>
 <template>
   <div>
-    <button @click="onGetPlayList">get</button>
-  </div>
-  <div>
-    {{ playList.description }}
-    <div class="playlist" v-for="list in playList" :key="list.id">
-      <mwa-playlist :data="list" />
+    <div class="playlist" v-if="playList.length">
+      <mwa-playlist
+        title="🌻인기 마뫄🌼"
+        :data="playList"
+        description="1분 마뫄 채널 조회수 TOP 10 !"
+        size="large"
+        :max="10"
+      />
     </div>
+    <div class="playlist" v-for="list in playList" :key="list.id">
+      <mwa-playlist
+        :data="[list]"
+        infinite
+        size="medium"
+        description="재생목록 최신 영상"
+      />
+    </div>
+    <p class="update">
+      최근 업데이트 약 {{ getTimeDiffHour(updateDate) }}시간 전
+    </p>
   </div>
 </template>
 <style lang="scss" scoped>
 .playlist {
-  margin-bottom: 40px;
+  margin-bottom: 30px;
 }
 button {
   padding: 24px;
   color: #333;
   cursor: pointer;
   background-color: #fff;
+}
+.update {
+  position: absolute;
+  top: 0;
+  left: 0;
+  color: #fff;
+  z-index: 3;
 }
 </style>

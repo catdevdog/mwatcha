@@ -44,7 +44,36 @@ export const getChannelVideos = async (param) => {
       });
 
       const { items, nextPageToken: nextToken } = response.data;
-      allVideos = [...allVideos, ...items]; // 가져온 동영상들을 배열에 추가
+
+      const videoIds = items.map((item) => item.snippet.resourceId.videoId);
+      const videoResponse = await mwa.get("videos", {
+        params: {
+          part: "contentDetails, statistics",
+          id: videoIds.join(","),
+          key: process.env.VUE_APP_YT_API_KEY,
+        },
+      });
+
+      const videoResult = items.map((item) => {
+        let returnValue = {};
+        videoResponse.data.items.forEach((video) => {
+          if (
+            item.contentDetails.videoId === video.id &&
+            Object.keys(video).length
+          ) {
+            returnValue = {
+              ...item,
+              detail: video.statistics,
+            };
+          }
+        });
+        return returnValue;
+      });
+
+      // console.log("items", videoResult);
+      // console.log(videoResponse.data);
+
+      allVideos = [...allVideos, ...videoResult]; // 가져온 동영상들을 배열에 추가
 
       nextPageToken = nextToken; // 다음 요청을 위해 nextPageToken 업데이트
     } while (nextPageToken); // nextPageToken이 없을 때까지 반복

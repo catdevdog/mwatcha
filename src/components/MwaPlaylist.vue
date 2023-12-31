@@ -1,5 +1,5 @@
 <script setup>
-import { defineProps, onMounted, ref } from "vue";
+import { computed, defineProps, onMounted, ref } from "vue";
 import MwaPlayer from "./MwaPlayer.vue";
 import {
   doc,
@@ -13,41 +13,45 @@ import {
   where,
 } from "firebase/firestore";
 import { initFirebase } from "@/firebase";
+import { Swiper, SwiperSlide } from "swiper/vue";
+import "swiper/css";
+import { FreeMode, Pagination } from "swiper/modules";
 
 const props = defineProps({
-  data: {
-    channel: String,
-    channelId: String,
-    count: Number,
-    description: String,
-    id: String,
-    name: String,
-    open: Boolean,
-  },
+  title: String,
+  data: Array,
+  infinite: Boolean,
+  description: String,
+  size: String,
+  max: Number,
 });
 
 const { db } = initFirebase();
+const isMount = ref(false);
 
 const videos = ref([]); // 페이지에 표시할 비디오들을 담을 배열
 const lastVisible = ref(null);
 
-const loadNextPage = async (lastVisible) => {
+const loadNextPage = async (next, viewMore = 8) => {
   const playlistRef = collection(db, "VIDEOS");
+  let q;
 
-  let q = query(
-    playlistRef,
-    where("playlistId", "==", props.data.id),
-    orderBy("date", "desc"),
-    limit(10)
-  );
-
-  if (lastVisible) {
+  if (props.data.length > 1) {
+    // mixed playlist
     q = query(
       playlistRef,
-      where("playlistId", "==", props.data.id),
+      orderBy("viewCount", "desc"),
+      ...(next ? [startAfter(next)] : []),
+      limit(props.max ?? viewMore)
+    );
+  } else {
+    const playlistIds = props.data.map((d) => d.id);
+    q = query(
+      playlistRef,
+      where("playlistId", "in", playlistIds),
       orderBy("date", "desc"),
-      startAfter(lastVisible.value),
-      limit(10)
+      ...(next ? [startAfter(next)] : []),
+      limit(props.max ?? viewMore)
     );
   }
 
@@ -57,7 +61,6 @@ const loadNextPage = async (lastVisible) => {
     if (doc.data().title !== "Private video") videos.value.push(doc.data());
   });
 
-  // 페이지네이션을 위해 마지막으로 받아온 문서를 반환합니다.
   return querySnapshot.docs[querySnapshot.docs.length - 1];
 };
 
@@ -66,27 +69,61 @@ const init = async () => {
 };
 
 const onNext = async () => {
-  const lastDoc = await loadNextPage(lastVisible);
+  const lastDoc = await loadNextPage(lastVisible.value);
   lastVisible.value = lastDoc;
 };
 
-onMounted(() => {
-  init();
+const playlistMergeTitle = computed(() => {
+  return props.data.map((pl) => pl.name).join(" +");
+});
+
+const perView = computed(() => {
+  return props.size == "large" ? 1.6 : 5.2;
+});
+
+const reachEnd = async (swiper) => {
+  if (swiper.isEnd && isMount.value && props.infinite) {
+    // 딜레이 추가
+    await new Promise((resolve) => setTimeout(resolve, 500)); // 1초 딜레이 (1000ms)
+    const lastDoc = await loadNextPage(lastVisible.value);
+    lastVisible.value = lastDoc;
+  }
+};
+onMounted(async () => {
+  await init();
+  isMount.value = true;
 });
 </script>
-
+<!--  -->
 <template>
-  <div class="playlist">
+  <div class="playlist" v-if="data">
     <div class="playlist-title">
-      {{ data.name }}
+      {{ title ? title : playlistMergeTitle }}
+      <span v-if="description">{{ description }}</span>
     </div>
     <div class="playlist-wrap">
-      <div class="playlist-player" v-for="video in videos" :key="video.id">
-        <mwa-player :video="video" />
-      </div>
+      <swiper
+        :slides-per-view="perView"
+        :modules="[FreeMode, Pagination]"
+        :space-between="8"
+        :freeMode="true"
+        :pagination="{
+          clickable: true,
+        }"
+        @reachEnd="reachEnd"
+        :breakpoints="{
+          '768': {
+            spaceBetween: 12,
+          },
+        }"
+      >
+        <swiper-slide v-for="video in videos" :key="video.id">
+          <div class="playlist-player">
+            <mwa-player :video="video" :size="size" />
+          </div>
+        </swiper-slide>
+      </swiper>
     </div>
-    <button @click="onNext">더 보기</button>
-    <!-- 페이지네이션을 위한 버튼 -->
   </div>
 </template>
 
@@ -94,14 +131,23 @@ onMounted(() => {
 .playlist {
   &-title {
     font-family: "TheJamsil3Regular";
-    font-size: 32px;
+    font-size: 4vh;
     color: #fff;
+    span {
+      font-size: 2vh;
+      white-space: nowrap;
+    }
   }
   &-wrap {
     margin-top: 20px;
-    display: flex;
+    // display: flex;
     justify-content: flex-start;
     gap: 20px;
+
+    @media (min-width: 680px) {
+      gap: 10px;
+    }
+
     overflow-x: auto;
     -ms-overflow-style: none; /* IE and Edge */
     scrollbar-width: none; /* Firefox */

@@ -1,5 +1,9 @@
 <script setup>
 import { defineProps, onMounted, ref } from "vue";
+import { covertNum } from "@/store/index";
+import { useRouter } from "vue-router";
+
+const router = useRouter();
 
 const props = defineProps({
   video: {
@@ -10,29 +14,29 @@ const props = defineProps({
     thumbnail: String,
     date: String,
     description: String,
-    view: Number,
+    detail: () => {},
   },
+  size: String,
 });
 
-const trans = ref(false);
 onMounted(() => {
-  trans.value = ref(true);
+  // console.log(props.video);
 });
+const goVideo = () => {
+  router.push(`/video/${props.video.id}`);
+};
 </script>
 <template>
-  <div class="player">
-    <img :src="video.thumbnail" alt="" :class="{ trans: trans }" />
-    <!-- <iframe
-      width="300"
-      height="200"
-      :src="`https://www.youtube.com/embed/${videoId}`"
-      frameborder="0"
-      allowfullscreen
-    ></iframe> -->
-  </div>
-  <div style="color: #fff">
-    <p>{{ video.date }}</p>
-    <p>{{ video.title }}</p>
+  <div :class="['player', `player-${size}`]" @click="goVideo">
+    <img :src="video.thumbnail" alt="" />
+    <div class="dimmed"></div>
+    <div class="player-data">
+      <p :class="`title ${size}`">
+        <span>{{ video.title }}</span>
+      </p>
+      <!-- <p class="date">{{ video.date }}</p> -->
+      <p :class="`count ${size}`">조회수 {{ covertNum(video.viewCount) }}회</p>
+    </div>
   </div>
 </template>
 <style lang="scss">
@@ -40,16 +44,85 @@ onMounted(() => {
   overflow: hidden;
   border-radius: 8px;
   background-color: #000;
+  position: relative;
+  cursor: pointer;
+
   img {
-    min-width: 320px;
-    height: 180px;
-    min-height: 180px;
+    width: 16vw;
     object-fit: cover;
-    opacity: 0.01;
-    &.trans {
-      opacity: 1;
-      // transition: 10s;
+    // opacity: 0.02;
+  }
+  &-large {
+    img {
+      width: 53vw;
     }
+  }
+
+  .dimmed {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    opacity: 0;
+    background-color: #000;
+    transition: 0.3s;
+  }
+  &:hover {
+    .dimmed {
+      opacity: 0.9;
+      transition: 0.15s;
+    }
+  }
+  &-data {
+    bottom: -80px;
+    position: absolute;
+    margin-top: 8px;
+    color: #fff;
+    transition: 0.3s;
+    left: 20px;
+    right: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+
+    .title {
+      max-width: 65%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      span {
+        font-family: "TheJamsil3Regular";
+        font-size: 40px;
+        white-space: nowrap;
+      }
+      &.medium {
+        span {
+          font-size: 16px;
+        }
+      }
+
+      &:hover {
+        span {
+          white-space: wrap;
+        }
+      }
+    }
+    .count {
+      color: #fff;
+      font-size: 40px;
+      &.medium {
+        font-size: 14px;
+      }
+    }
+  }
+
+  .player-data {
+    bottom: 20px;
+    margin-top: 8px;
+    color: #fff;
+    transition: 0.3s;
+  }
+  &:hover {
   }
 }
 </style>

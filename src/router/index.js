@@ -20,6 +20,16 @@ const router = createRouter({
         },
       ],
     },
+    {
+      path: "/",
+      children: [
+        {
+          path: "/video/:videoId",
+          name: "/video",
+          component: () => import("@/view/video/IndexPage.vue"),
+        },
+      ],
+    },
   ],
 });
 
