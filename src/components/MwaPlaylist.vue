@@ -2,42 +2,52 @@
 import { getClassifiedVideos } from "@/api/inquiry";
 import { initFirebase } from "@/firebase";
 import "swiper/css";
-import { FreeMode, Pagination } from "swiper/modules";
+import { FreeMode, Pagination, Navigation } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/vue";
 import { defineProps, onMounted, ref } from "vue";
 import MwaPlayer from "./MwaPlayer.vue";
+import "swiper/css";
 
 const props = defineProps({
   title: String,
   playlist: Array,
-  infinite: Boolean,
+  infinite: {
+    type: Boolean,
+    default: true,
+  },
   description: String,
   size: String,
   initCount: Number,
 });
-
-const { db } = initFirebase();
 const isMount = ref(false);
+const next = ref(0);
 
 const videos = ref([]); // 페이지에 표시할 비디오들을 담을 배열
 
 const reachEnd = async (swiper) => {
   if (swiper.isEnd && isMount.value && props.infinite) {
     // // 딜레이 추가
-    // await new Promise((resolve) => setTimeout(resolve, 500)); // 1초 딜레이 (1000ms)
-    // const lastDoc = await loadNextPage(lastVisible.value);
-    // lastVisible.value = lastDoc;
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    const { resultVideos, nextStart } = await getClassifiedVideos(
+      props.playlist,
+      8,
+      ["date", "desc"],
+      next.value,
+      4
+    );
+    videos.value = [...videos.value, ...resultVideos];
+    next.value = nextStart;
   }
 };
 onMounted(async () => {
   isMount.value = true;
   const { resultVideos, nextStart } = await getClassifiedVideos(
     props.playlist,
-    5,
+    8,
     ["date", "desc"]
   );
   videos.value = resultVideos;
-  // console.log(videos.value);
+  next.value = nextStart;
 });
 </script>
 <!--  -->
@@ -48,14 +58,22 @@ onMounted(async () => {
     </div>
     <div class="playlist-wrap">
       <swiper
-        :slides-per-view="4.4"
-        :modules="[FreeMode, Pagination]"
+        :modules="[FreeMode, Pagination, Navigation]"
+        :navigation="{
+          nextEl: `.swiper-button-next-${playlist[0]}`,
+          prevEl: `.swiper-button-prev-${playlist[0]}`,
+        }"
         :space-between="8"
         :freeMode="true"
         :pagination="{
           clickable: true,
         }"
         @reachEnd="reachEnd"
+        :breakpoints="{
+          1280: { slidesPerView: 5.4 },
+          768: { slidesPerView: 3.6 },
+          360: { slidesPerView: 1.2 },
+        }"
       >
         <swiper-slide v-for="video in videos" :key="video.id">
           <div class="playlist-player">
@@ -63,36 +81,45 @@ onMounted(async () => {
           </div>
         </swiper-slide>
       </swiper>
+      <div :class="`swiper-button-prev-${playlist[0]} nav prev`">◀</div>
+      <div :class="`swiper-button-next-${playlist[0]} nav next`">▶</div>
     </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
 .playlist {
-  &-title {
-    font-family: "TheJamsil3Regular";
-    font-size: 4vh;
-    color: #fff;
-    span {
-      font-size: 2vh;
-      white-space: nowrap;
-    }
-  }
   &-wrap {
-    margin-top: 20px;
-    // display: flex;
-    justify-content: flex-start;
-    gap: 20px;
-
-    @media (min-width: 680px) {
-      gap: 10px;
-    }
+    margin-top: 10px;
+    position: relative;
 
     overflow-x: auto;
     -ms-overflow-style: none; /* IE and Edge */
     scrollbar-width: none; /* Firefox */
     &::-webkit-scrollbar {
       display: none; /* Chrome, Safari, Opera*/
+    }
+
+    .nav {
+      position: absolute;
+      cursor: pointer;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #212121;
+      border-radius: 20px;
+      font-size: 10px;
+      z-index: 3;
+      top: calc((100% - 39px) / 2 - 25px);
+      &.next {
+        right: 10px;
+      }
+      &.prev {
+        left: 10px;
+      }
+      opacity: 0.8;
     }
   }
 }

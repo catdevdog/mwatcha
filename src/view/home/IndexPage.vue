@@ -61,17 +61,17 @@ onMounted(async () => {
     <!-- 메인 - 모든 채널의 재생목록  -->
     <div class="channel" v-for="channel in playList" :key="channel.id">
       <div class="channel-title">
-        <p>{{ channel.name }}</p>
-        <span>description</span>
+        <p>CH. {{ channel.name }}</p>
       </div>
       <div class="channel-content">
         <div class="playlist" v-for="list in channel.playList" :key="list.id">
           <p class="playlist-title">
             {{ list.snippet.title }}
           </p>
-          <div class="playlist-wrap">
+          <div class="playlist-content">
             <mwa-playlist :playlist="[list.id]" />
           </div>
+          <template v-if="list.length"> </template>
         </div>
       </div>
     </div>
@@ -82,8 +82,27 @@ onMounted(async () => {
   </div>
 </template>
 <style lang="scss" scoped>
-.playlist {
-  margin-bottom: 30px;
+.channel {
+  margin-bottom: 36px;
+  &-title {
+    p {
+      font-size: 36px;
+      font-family: "TheJamsil3Regular";
+    }
+    margin-bottom: 4px;
+  }
+  &-content {
+  }
+
+  .playlist {
+    margin-bottom: 24px;
+    &-title {
+      font-size: 24px;
+    }
+    &-content {
+      padding-left: 40px;
+    }
+  }
 }
 button {
   padding: 24px;

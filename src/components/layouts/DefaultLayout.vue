@@ -8,16 +8,16 @@
 </template>
 <style lang="scss" scoped>
 .layout {
-  padding: 40px 0 0 280px;
+  padding: 40px 0 0 240px;
 
-  @media (max-width: 768px) {
+  @media (max-width: 1280px) {
     padding: 20px;
   }
   .header {
     height: 400px;
   }
   .footer {
-    height: 400px;
+    padding-top: 400px;
   }
 }
 </style>

@@ -46,3 +46,16 @@ export const covertNum = (number) => {
     return number.toString();
   }
 };
+
+export const timestampToFormat = (timestamp) => {
+  const date = new Date(timestamp);
+  const year = date.getFullYear() % 100; // 년도의 마지막 두 자리 가져오기
+  const month = date.getMonth() + 1; // 월은 0부터 시작하므로 1을 더해줍니다.
+  const day = date.getDate();
+
+  // 날짜, 월, 년도를 형식에 맞게 조정하여 반환
+  const formattedDate = `${year.toString().padStart(2, "0")}.${month
+    .toString()
+    .padStart(2, "0")}.${day.toString().padStart(2, "0")}`;
+  return formattedDate;
+};
