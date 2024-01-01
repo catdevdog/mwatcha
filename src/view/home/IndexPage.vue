@@ -1,27 +1,17 @@
 <script setup>
-import { onMounted, ref } from "vue";
-import { getChannelPlaylists, getChannelVideos } from "@/api/index";
-import {
-  doc,
-  getDocs,
-  collection,
-  setDoc,
-  orderBy,
-  limit,
-  startAfter,
-  query,
-  updateDoc,
-} from "firebase/firestore";
-import { initFirebase } from "@/firebase";
+import { getPlayList, getYouTubeDatas } from "@/api/index";
 import MwaPlaylist from "@/components/MwaPlaylist.vue";
+import { initFirebase } from "@/firebase";
 import { compareTimestamps, getTimeDiffHour } from "@/store/index";
+import { collection, getDocs } from "firebase/firestore";
+import { onMounted, ref } from "vue";
 
 const { db } = initFirebase();
-// .doc("bucket_item").update({ name: 'duck2' });
 
 const channelList = ref([]);
 const playList = ref([]);
-const updateDelay = ref(24);
+
+const updateDelay = ref(6); // 업데이트 주기 (hour)
 const updateDate = ref(0);
 
 /**
@@ -31,136 +21,63 @@ const updateDate = ref(0);
  */
 
 const init = async () => {
+  // 첫 진입 시 채널 데이터 조회
   const docRef = collection(db, "CHANNEL_ID");
   const docSnap = await getDocs(docRef);
   docSnap.forEach((item) => {
     channelList.value.push(item.data());
   });
 
-  const playListRef = collection(db, "PLAYLIST");
-  const playListSnap = await getDocs(playListRef);
-
-  playListSnap.forEach((item) => {
-    if (item.data().open) playList.value.push(item.data());
-  });
-  await onGetPlayList();
-};
-
-const onUpdateDt = async (channel) => {
-  await updateDoc(doc(db, "CHANNEL_ID", channel.id), {
-    lastUpdateDt: +new Date(),
-  });
-};
-
-const onGetPlayList = async () => {
-  channelList.value.forEach(async (channel) => {
-    const param = {
-      part: "snippet",
-      channelId: channel.id,
-      maxResults: 20,
-    };
-
-    // 페이지 진입 시 channel 컬렉션에 lastUpdateDt 값 조회 후 현재 시스템 시각과 비교 > 6시간 이상 차이나면 false
-    // -> 조회 완료 후 update값 true로 변경
-    if (
-      compareTimestamps(channel.lastUpdateDt, +new Date(), updateDelay.value)
-    ) {
-      // updateDelay보다 큰 경우(업데이트 필요 한 경우)
-      onSetPlayListData(playList.value, channel);
-      console.log("조회 완료");
+  // 각 채널 재생 목록 조회 후 재생목록 디비에 입력
+  channelList.value.forEach(async (ch) => {
+    if (compareTimestamps(ch.lastUpdateDt, +new Date(), updateDelay.value)) {
+      // 업데이트 기록이 기준보다 오래된 경우 데이터 조회
+      await getYouTubeDatas(ch.id);
     } else {
-      updateDate.value = channel.lastUpdateDt;
+      // 아닌 경우 DB 사용
+      updateDate.value = ch.lastUpdateDt;
       console.log(
-        `${channel.name} 채널 - 마지막 업데이트 ${new Date(
-          channel.lastUpdateDt
-        )}`
-      );
-      console.log(
-        `${channel.name} 채널 - ${updateDelay.value}시간 내 업데이트 기록이 있습니다.`
+        `${ch.name} 채널 - ${updateDelay.value}시간 내 업데이트 기록이 있습니다.`
       );
     }
   });
 };
 
-const onSetPlayListData = async (list, channel) => {
-  onUpdateDt(channel); // 채널 업데이트
-  list.forEach(async (playList) => {
-    const param = {
-      part: "snippet,contentDetails",
-      playlistId: playList.id,
-      maxResults: 50,
-    };
-
-    const videos = [];
-    const result = await getChannelVideos(param);
-    // console.log(result);
-
-    result.forEach((video) => {
-      if (Object.keys(video).length) {
-        videos.push({
-          channel: channel.name,
-          channelId: channel.id,
-          playlistId: video.snippet.playlistId,
-          title: video.snippet.title,
-          id: video.snippet.resourceId.videoId,
-          thumbnail:
-            video.snippet.thumbnails?.maxres?.url ??
-            video.snippet.thumbnails?.standard?.url ??
-            "",
-          date: video.snippet.publishedAt,
-          ...video.detail,
-        });
-      }
-    });
-    // 플레이리스트 컬렉션에 추가
-    await setDoc(doc(db, "PLAYLIST", playList.id), {
-      channel: channel.name,
-      channelId: channel.id,
-      count: videos.length,
-      id: playList.id,
-      name: playList.name,
-      description: playList.description,
-      open: channel.open,
-    });
-
-    await onSetVideos(videos); // 비디오 컬렉션에 추가
-  });
-};
-
-const onSetVideos = async (videos) => {
-  videos.forEach(async (video) => {
-    await setDoc(doc(db, "VIDEOS", video.id), {
-      ...video,
-      viewCount: Number(video.viewCount),
-    });
-  });
-};
-
 onMounted(async () => {
   await init();
+
+  playList.value = await Promise.all(
+    channelList.value.map(async (channel) => {
+      return {
+        ...channel,
+        playList: await getPlayList(channel.id),
+      };
+    })
+  );
 });
 </script>
 <template>
-  <div>
-    <div class="playlist" v-if="playList.length">
-      <mwa-playlist
-        title="🌻인기 마뫄🌼"
-        :data="playList"
-        description="1분 마뫄 채널 조회수 TOP 10 !"
-        size="large"
-        :max="10"
-      />
-    </div>
-    <div class="playlist" v-for="list in playList" :key="list.id">
-      <mwa-playlist
-        :data="[list]"
-        infinite
-        size="medium"
-        description="재생목록 최신 영상"
-      />
+  <div v-if="playList.length" style="color: #fff">
+    <!-- 메인 - 모든 채널의 재생목록  -->
+    <div class="channel" v-for="channel in playList" :key="channel.id">
+      <div class="channel-title">
+        <p>{{ channel.name }}</p>
+        <span>description</span>
+      </div>
+      <div class="channel-content">
+        <div class="playlist" v-for="list in channel.playList" :key="list.id">
+          <p class="playlist-title">
+            {{ list.snippet.title }}
+          </p>
+          <div class="playlist-wrap">
+            <mwa-playlist :playlist="[list.id]" />
+          </div>
+        </div>
+      </div>
     </div>
     <p class="update">
-      최근 업데이트 약 {{ getTimeDiffHour(updateDate) }}시간 전
+      최근 업데이트 약 {{ getTimeDiffHour(updateDate) }}시간 전 / 현재
+      {{ updateDelay }}시간을 주기로 업데이트 합니다.
     </p>
   </div>
 </template>
