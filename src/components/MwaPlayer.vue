@@ -26,7 +26,7 @@ onMounted(() => {
   // console.log(props.video);
 });
 const goVideo = () => {
-  router.push(`/video/${props.video.id}`);
+  router.push(`/video/${props.video.videoId}`);
 };
 
 const thumbnail = computed(() => {
