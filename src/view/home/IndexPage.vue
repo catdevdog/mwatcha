@@ -5,6 +5,7 @@ import { initFirebase } from "@/firebase";
 import { compareTimestamps, getTimeDiffHour } from "@/store/index";
 import { collection, getDocs } from "firebase/firestore";
 import { onMounted, ref } from "vue";
+import MwaMainVideo from "@/components/MwaMainVideo.vue";
 
 const { db } = initFirebase();
 
@@ -59,6 +60,9 @@ onMounted(async () => {
 <template>
   <div v-if="playList.length" style="color: #fff">
     <!-- 메인 - 모든 채널의 재생목록  -->
+    <div class="main-video">
+      <mwa-main-video :playlist="playList" />
+    </div>
     <div class="channel" v-for="channel in playList" :key="channel.id">
       <div class="channel-title">
         <p>CH. {{ channel.name }}</p>
@@ -75,15 +79,15 @@ onMounted(async () => {
         </div>
       </div>
     </div>
-    <p class="update">
+    <!-- <p class="update">
       최근 업데이트 약 {{ getTimeDiffHour(updateDate) }}시간 전 / 현재
       {{ updateDelay }}시간을 주기로 업데이트 합니다.
-    </p>
+    </p> -->
   </div>
 </template>
 <style lang="scss" scoped>
 .channel {
-  margin-bottom: 36px;
+  margin-top: 36px;
   &-title {
     p {
       font-size: 36px;
@@ -92,15 +96,15 @@ onMounted(async () => {
     margin-bottom: 4px;
   }
   &-content {
+    padding-left: 40px;
+    @media (max-width: 1280px) {
+      padding: 0px;
+    }
   }
-
   .playlist {
     margin-bottom: 24px;
     &-title {
       font-size: 24px;
-    }
-    &-content {
-      padding-left: 40px;
     }
   }
 }
