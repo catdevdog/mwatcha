@@ -13,6 +13,10 @@
   font-weight: 400;
   font-style: normal;
 }
+body,
 html {
-  background-color: #111;
+  scroll-behavior: smooth;
+}
+html {
+  background-color: #000;
 }

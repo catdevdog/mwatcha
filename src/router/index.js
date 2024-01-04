@@ -18,17 +18,16 @@ const router = createRouter({
           name: "/dev",
           component: () => import("@/view/dev/IndexPage.vue"),
         },
-      ],
-    },
-    {
-      path: "/",
-      children: [
         {
           path: "/video/:videoId",
           name: "/video",
           component: () => import("@/view/video/IndexPage.vue"),
         },
       ],
+    },
+    {
+      path: "/",
+      children: [],
     },
   ],
 });

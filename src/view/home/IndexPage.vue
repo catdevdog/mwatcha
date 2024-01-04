@@ -63,12 +63,22 @@ onMounted(async () => {
     <div class="main-video">
       <mwa-main-video :playlist="playList" />
     </div>
-    <div class="channel" v-for="channel in playList" :key="channel.id">
+    <div
+      class="channel"
+      v-for="channel in playList"
+      :key="channel.id"
+      :id="channel.id"
+    >
       <div class="channel-title">
         <p>CH. {{ channel.name }}</p>
       </div>
       <div class="channel-content">
-        <div class="playlist" v-for="list in channel.playList" :key="list.id">
+        <div
+          class="playlist"
+          v-for="list in channel.playList"
+          :key="list.id"
+          :id="list.id"
+        >
           <p class="playlist-title">
             {{ list.snippet.title }}
           </p>
@@ -88,6 +98,7 @@ onMounted(async () => {
 <style lang="scss" scoped>
 .channel {
   margin-top: 36px;
+  padding-left: 20px;
   &-title {
     p {
       font-size: 36px;

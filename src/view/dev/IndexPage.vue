@@ -1,50 +1,18 @@
-<template>
-  <iframe
-    :src="`https://www.youtube.com/embed/SVbtT0U-cj8`"
-    frameborder="0"
-    allowfullscreen
-  ></iframe>
-</template>
+import { timestampToFormat } from '@/store'; import { timestampToFormat } from
+'@/store';
+
 <script setup>
+import { liveOnDate } from "@/store/data";
 import { onMounted } from "vue";
-import { getClassifiedVideos } from "@/api/inquiry";
-import { initFirebase } from "@/firebase";
-import {
-  collection,
-  getDocs,
-  query,
-  orderBy,
-  startAfter,
-  limit,
-  where,
-} from "firebase/firestore";
+import Chart from "chart.js/auto";
 
-const { db } = initFirebase();
-//PL1ZI099H6FYwUeZHR5btiNSJ8G_-BIXaD
-
-onMounted(async () => {
-  const { resultVideos, nextStart } = await getClassifiedVideos(
-    ["PL1ZI099H6FYzptNutJOlI4H-5dpIzldyx"],
-    5,
-    ["date", "desc"]
-  );
-  // console.log(resultVideos);
-
-  const docRef = collection(db, "VIDEOS");
-
-  let q;
-
-  q = query(docRef, where("videoId", "==", "SVbtT0U-cj8"));
-
-  const querySnapshot = await getDocs(q);
-  // const nextStart = querySnapshot.docs[querySnapshot.docs.length - 1];
-
-  // const resultVideos = [];
-
-  querySnapshot.forEach((doc) => {
-    resultVideos.push(doc.data());
-  });
-  console.log(resultVideos);
-});
+onMounted(async () => {});
 </script>
-<style lang="scss" scoped></style>
+<template>
+  <div style="width: 800px"><canvas id="acquisitions"></canvas></div>
+</template>
+<style lang="scss" scoped>
+* {
+  color: #fff;
+}
+</style>

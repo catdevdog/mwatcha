@@ -13,7 +13,7 @@ onMounted(() => {
 <template>
   <div class="video">
     <iframe
-      :src="`https://www.youtube.com/embed/${videoId}`"
+      :src="`https://www.youtube.com/embed/${videoId}?autoplay=1`"
       frameborder="0"
       allowfullscreen
     ></iframe>
