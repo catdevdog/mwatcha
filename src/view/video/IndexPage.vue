@@ -13,7 +13,7 @@ onMounted(() => {
 <template>
   <div class="video">
     <iframe
-      :src="`https://www.youtube.com/embed/${videoId}?autoplay=1`"
+      :src="`https://www.youtube.com/embed/${videoId}?rel=0&vq=hd1080`"
       frameborder="0"
       allowfullscreen
     ></iframe>
@@ -22,10 +22,9 @@ onMounted(() => {
 <style lang="scss" scoped>
 .video {
   width: 100%;
-  height: 100vh;
+  height: calc(100vh - 60px);
   position: relative;
   iframe {
-    position: absolute;
     width: 100%;
     height: 100%;
   }

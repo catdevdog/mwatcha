@@ -1,13 +1,34 @@
 <script setup>
 import { getPlayList } from "@/api/index";
+import { getSearchVideos } from "@/api/inquiry";
 import { initFirebase } from "@/firebase";
 import { collection, getDocs } from "firebase/firestore";
 import { onMounted, ref } from "vue";
+import { useRoute, useRouter } from "vue-router";
+
+const route = useRoute();
+const router = useRouter();
 
 const { db } = initFirebase();
 
 const channelList = ref([]);
 const playList = ref([]);
+const selectedChannelId = ref("");
+const selectedChannelPlaylist = ref([]);
+
+const searchValue = ref("");
+const isSearch = ref(false);
+
+const onClickChannel = (ch) => {
+  if (route.name !== "/") router.push("/");
+  selectedChannelId.value = ch.id;
+  selectedChannelPlaylist.value = ch.playList;
+};
+
+const onSearch = async () => {
+  await router.push(`/result/${searchValue.value}`);
+  location.reload();
+};
 
 onMounted(async () => {
   // TODO: 데이터 중복 호출 문제 해소, store
@@ -23,86 +44,197 @@ onMounted(async () => {
       return {
         ...channel,
         playList: await getPlayList(channel.id),
-        toggle: true,
+        toggle: false,
       };
     })
   );
-  console.log(playList.value);
 });
 </script>
 <template>
   <div class="layout">
-    <div class="header" style="color: #fff">
-      <!-- <p>24.01.01 업데이트 내용</p>
-      <br />
-      <p>- '마뫄' 채널 api 오픈</p>
-      <p>- 모든 재생목록 연결</p>
-      <p>- 모바일 1차 대응</p>
-      <p>- 기타 코드 최적화 + 디자인 변경</p> -->
+    <div class="header">
+      <div class="search-wrap" v-if="isSearch">
+        <label for="search">
+          <input
+            type="text"
+            v-model="searchValue"
+            id="search"
+            placeholder="키워드 검색"
+            @keydown.enter="onSearch"
+          />
+          <button @click="onSearch">
+            <img src="@/assets/icon-search.svg" alt="" />
+          </button>
+        </label>
+        <span>BETA</span>
+      </div>
     </div>
     <div class="nav">
       <div class="logo">
-        <img src="@/assets/logo.png" alt="" />
+        <router-link to="/">
+          <img src="@/assets/logo.png" alt="" />
+        </router-link>
       </div>
       <div class="menu">
-        <div class="menu-channel" v-for="ch in playList" :key="ch.id">
-          <p class="menu-title" @click="ch.toggle = !ch.toggle">
-            <a :href="`#${ch.id}`">{{ ch.name }}</a>
-          </p>
-          <ul v-if="ch.toggle">
-            <li class="menu-playlist" v-for="pl in ch.playList" :key="pl.id">
-              - <a :href="`#${pl.id}`">{{ pl.snippet.title }}</a>
-            </li>
-          </ul>
+        <div class="menu-channel">
+          <button class="menu-title" @click="isSearch = !isSearch">
+            <img src="@/assets/icon-search.svg" alt="" />
+            <p>찾기</p>
+          </button>
         </div>
       </div>
-      <div class="update">
-        24.01.04 - 업데이트 내용
+      <hr />
+      <div class="menu">
+        <div class="menu-channel" v-for="ch in playList" :key="ch.id">
+          <a class="menu-title" :href="`#${ch.id}`" @click="onClickChannel(ch)">
+            <img src="@/assets/LOGO_YT.svg" alt="youtube" />
+            <p>{{ ch.name }}</p>
+          </a>
+        </div>
+      </div>
+      <hr />
+      <div class="menu-playlist" v-if="selectedChannelPlaylist.length">
         <ul>
-          <li>- PC 로고 추가</li>
-          <li>- 죄송합니다. 디자인 할 줄 모릅니다.</li>
-          <li>- PC 네비게이션 추가</li>
-          <li>catdevdog@gmail.com</li>
+          <li
+            class="playlist"
+            v-for="pl in selectedChannelPlaylist"
+            :key="pl.id"
+          >
+            <img src="@/assets/icon-playlist.svg" alt="youtube" />
+            <a :href="`#${pl.id}`">{{ pl.snippet.title }}</a>
+          </li>
         </ul>
       </div>
+      <div class="developer">catdevdog@gmail.com</div>
     </div>
     <router-view />
     <div class="footer" style="color: #fff"></div>
   </div>
 </template>
 <style lang="scss" scoped>
+.header {
+  padding: 0 36px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  .search-wrap {
+    label {
+      display: inline-flex;
+      align-items: center;
+      background: rgb(34, 35, 38);
+      padding: 6px 12px;
+      border-radius: 6px;
+      overflow: hidden;
+      input {
+        flex: 1 0 auto;
+        background: transparent;
+        color: #fff;
+        padding: 0px;
+        border: 0px;
+        outline: none;
+        margin: 0px;
+        appearance: none;
+        caret-color: #997000;
+        font-size: 15px;
+        font-weight: 400;
+        letter-spacing: 0px;
+        line-height: 20px;
+      }
+      button {
+        cursor: pointer;
+      }
+    }
+    span {
+      display: inline-block;
+      padding: 6px 8px;
+      background: rgb(34, 35, 38);
+      margin-left: 8px;
+      color: #fff;
+      border-radius: 6px;
+      font-size: 12px;
+      font-family: "Pretendard-Thin";
+      letter-spacing: 0.5px;
+    }
+  }
+}
+
 .menu {
-  margin-top: 30px;
+  margin-top: 20px;
   &-channel {
-    margin-bottom: 18px;
+    margin-bottom: 6px;
   }
   &-title {
-    font-size: 20px;
-    a {
-      font-family: "TheJamsil3Regular";
+    font-size: 15px;
+    padding: 8px 8px;
+    border-radius: 6px;
+    font-family: "Pretendard-Light";
+    display: block;
+    width: 100%;
+    transition: 0.1s;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    color: #fff;
+
+    &:hover {
+      transition: 0.1s;
+      background-color: #303133;
+    }
+    img {
+      width: 22px;
     }
   }
   &-playlist {
-    padding-left: 8px;
-    margin-top: 8px;
-    color: #eaeaea;
-    white-space: nowrap;
-    a {
+    max-height: calc(100vh - 350px);
+    overflow-y: auto;
+    .playlist {
+      padding-left: 8px;
+      margin-bottom: 12px;
+      color: #eaeaea;
+      white-space: nowrap;
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      gap: 8px;
       font-size: 14px;
+      font-family: "Pretendard-Light";
+      color: #999;
+
       &:hover {
-        text-decoration: underline;
+        transition: 0.1s;
+        color: #fff;
+      }
+      a {
+        flex: 1 1 auto;
+        white-space: normal;
+      }
+      img {
+        width: 20px;
       }
     }
   }
 }
+
 .layout {
-  padding: 0 0 0 300px;
+  padding: 56px 0 0 240px;
 
   @media (max-width: 1280px) {
-    padding: 0px;
+    padding: 56px 0px 0;
   }
   .header {
-    // height: 400px;
+    position: fixed;
+    top: 0;
+    left: 240px;
+    right: 0;
+    height: 56px;
+    background-color: #111;
+    z-index: 13;
+
+    @media (max-width: 1280px) {
+      left: 0px;
+    }
   }
   .footer {
     // padding-top: 100px;
@@ -116,21 +248,28 @@ onMounted(async () => {
     border-right: 1px #1b1c1d solid;
     background-color: #111;
 
-    width: 300px;
-    padding: 0 15px;
+    width: 240px;
+    padding: 0 16px;
 
-    img {
-      width: 100%;
+    .logo {
+      padding: 8px;
+      img {
+        width: 120px;
+      }
     }
 
     @media (max-width: 1280px) {
       display: none;
     }
   }
-  .update {
-    font-size: 12px;
+  .developer {
+    font-size: 14px;
     position: absolute;
-    bottom: 0;
+    bottom: 20px;
+    font-family: "Pretendard-Thin";
+    text-align: center;
+    width: auto;
+    color: #666;
   }
 }
 </style>

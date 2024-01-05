@@ -7,6 +7,8 @@ import {
   startAfter,
   limit,
   where,
+  startAt,
+  endAt,
 } from "firebase/firestore";
 
 const { db } = initFirebase();
@@ -37,6 +39,41 @@ export const getClassifiedVideos = async (
     docRef,
     where("playlistId", "in", playListIds),
     orderBy(order[0], order[1]),
+    ...(next ? [startAfter(next)] : []),
+    limit(next ? nextLimit : videolimit)
+  );
+
+  const querySnapshot = await getDocs(q);
+  const nextStart = querySnapshot.docs[querySnapshot.docs.length - 1];
+
+  const resultVideos = [];
+
+  querySnapshot.forEach((doc) => {
+    resultVideos.push(doc.data());
+  });
+
+  return {
+    resultVideos,
+    nextStart,
+  };
+};
+
+export const getSearchVideos = async (
+  text,
+  videolimit,
+  order,
+  next,
+  nextLimit = 10
+) => {
+  const docRef = collection(db, "VIDEOS");
+
+  let q;
+
+  q = query(
+    docRef,
+    orderBy("title"), // 제목 정렬
+    startAt(text),
+    endAt(text + "\uf8ff"),
     ...(next ? [startAfter(next)] : []),
     limit(next ? nextLimit : videolimit)
   );

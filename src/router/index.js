@@ -14,14 +14,19 @@ const router = createRouter({
           component: () => import("@/view/home/IndexPage.vue"),
         },
         {
-          path: "/dev-page",
-          name: "/dev",
-          component: () => import("@/view/dev/IndexPage.vue"),
-        },
-        {
           path: "/video/:videoId",
           name: "/video",
           component: () => import("@/view/video/IndexPage.vue"),
+        },
+        {
+          path: "/result/:search",
+          name: "/result",
+          component: () => import("@/view/search/IndexPage.vue"),
+        },
+        {
+          path: "/dev-page",
+          name: "/dev",
+          component: () => import("@/view/dev/IndexPage.vue"),
         },
       ],
     },

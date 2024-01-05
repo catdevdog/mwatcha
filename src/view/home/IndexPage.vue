@@ -70,7 +70,8 @@ onMounted(async () => {
       :id="channel.id"
     >
       <div class="channel-title">
-        <p>CH. {{ channel.name }}</p>
+        <img src="@/assets/logo_youtube_color.svg" alt="youtube" />
+        <p>{{ channel.name }}</p>
       </div>
       <div class="channel-content">
         <div
@@ -97,25 +98,34 @@ onMounted(async () => {
 </template>
 <style lang="scss" scoped>
 .channel {
-  margin-top: 36px;
+  padding-top: 56px;
   padding-left: 20px;
   &-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-left: 12px;
+    margin-bottom: 12px;
+
+    img {
+      height: 46px;
+    }
     p {
       font-size: 36px;
-      font-family: "TheJamsil3Regular";
+      font-family: "Pretendard-Bold";
     }
     margin-bottom: 4px;
   }
   &-content {
-    padding-left: 40px;
+    padding-left: 12px;
     @media (max-width: 1280px) {
       padding: 0px;
     }
   }
   .playlist {
-    margin-bottom: 24px;
+    margin-bottom: 18px;
     &-title {
-      font-size: 24px;
+      font-size: 20px;
     }
   }
 }

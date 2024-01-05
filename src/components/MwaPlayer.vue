@@ -65,12 +65,13 @@ const thumbnail = computed(() => {
     transition: 0.3s;
     width: 100%;
     object-fit: cover;
-    // opacity: 0.04;
+    opacity: 0.8;
   }
   &:hover img {
     transform: translate(-5%, -5%);
     width: 110%;
     transition: 0.3s;
+    opacity: 1;
   }
 
   @media (max-width: 1280px) {
@@ -81,10 +82,11 @@ const thumbnail = computed(() => {
     }
   }
   &-data {
+    font-family: "Pretendard-Thin";
     margin-top: 6px;
     color: #fff;
     .title {
-      font-size: 16px;
+      font-size: 15px;
     }
     .date-count {
       margin-top: 4px;

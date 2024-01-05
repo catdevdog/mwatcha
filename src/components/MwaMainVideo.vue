@@ -38,12 +38,14 @@ onMounted(async () => {
         allowfullscreen
       ></iframe>
       <div class="main-info">
-        <span class="channel-title">[ {{ latestVideo.channelTitle }} ]</span>
+        <p class="channel-title">
+          <span class="new">NEW</span> {{ latestVideo.channelTitle }}
+        </p>
         <p class="title">{{ latestVideo.title }}</p>
         <p class="date-count">
           {{ timestampToFormat(latestVideo.date) }} <em>•</em> 조회수
-          {{ covertNum(latestVideo.viewCount) }}회<em>•</em> 마뫄 3 채널 영상 중
-          가장 최신 영상이 표시됩니다!
+          {{ covertNum(latestVideo.viewCount) }} 회<em>•</em> 마뫄 3 채널 영상
+          중 가장 최신 영상이 표시됩니다!
         </p>
       </div>
       <div class="main-dimmed"></div>
@@ -74,19 +76,27 @@ onMounted(async () => {
 
     .channel-title {
       font-size: 26px;
+      .new {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 4px;
+        background-color: red;
+        font-family: "Pretendard-SemiBold";
+        margin-right: 4px;
+      }
     }
     .title {
       margin-top: 8px;
-      font-family: "TheJamsil3Regular";
       font-size: 60px;
     }
     .date-count {
+      font-family: "Pretendard-Thin";
       margin-top: 4px;
       color: #eaeaea;
       em {
         color: #777;
         font-size: 12px;
-        margin: 0 4px;
+        margin: 0 2px;
       }
     }
 
@@ -102,7 +112,6 @@ onMounted(async () => {
       }
       .title {
         margin-top: 4px;
-        font-family: "TheJamsil3Regular";
         font-size: 18px;
       }
       .date-count {
