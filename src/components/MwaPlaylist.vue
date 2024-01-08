@@ -1,12 +1,10 @@
 <script setup>
 import { getClassifiedVideos } from "@/api/inquiry";
-import { initFirebase } from "@/firebase";
 import "swiper/css";
-import { FreeMode, Pagination, Navigation } from "swiper/modules";
+import { FreeMode, Navigation, Pagination } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/vue";
 import { defineProps, onMounted, ref } from "vue";
 import MwaPlayer from "./MwaPlayer.vue";
-import "swiper/css";
 
 const props = defineProps({
   title: String,

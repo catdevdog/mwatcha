@@ -68,6 +68,7 @@ onMounted(async () => {
         </label>
         <span>BETA</span>
       </div>
+      <router-link to="/mamwa"> 젠장 또 마뫄야.. </router-link>
     </div>
     <div class="nav">
       <div class="logo">

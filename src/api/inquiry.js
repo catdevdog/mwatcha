@@ -58,6 +58,16 @@ export const getClassifiedVideos = async (
   };
 };
 
+/**
+ * 공통 - 키워드 검색 조회 함수
+ * @param {
+ *  text: string
+ *  videolimit: number,
+ *  next?: number ,
+ *  nextLimit?: number
+ * }
+ *
+ */
 export const getSearchVideos = async (
   text,
   videolimit,

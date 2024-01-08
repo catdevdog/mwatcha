@@ -24,6 +24,11 @@ const router = createRouter({
           component: () => import("@/view/search/IndexPage.vue"),
         },
         {
+          path: "/mamwa",
+          name: "/mamwa",
+          component: () => import("@/view/mamwa/IndexPage.vue"),
+        },
+        {
           path: "/dev-page",
           name: "/dev",
           component: () => import("@/view/dev/IndexPage.vue"),

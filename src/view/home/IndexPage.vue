@@ -6,13 +6,14 @@ import { compareTimestamps, getTimeDiffHour } from "@/store/index";
 import { collection, getDocs } from "firebase/firestore";
 import { onMounted, ref } from "vue";
 import MwaMainVideo from "@/components/MwaMainVideo.vue";
+import TrendVideos from "@/components/TrendVideos.vue";
 
 const { db } = initFirebase();
 
 const channelList = ref([]);
 const playList = ref([]);
 
-const updateDelay = ref(6); // 업데이트 주기 (hour)
+const updateDelay = ref(1); // 업데이트 주기 (hour)
 const updateDate = ref(0);
 
 /**
@@ -63,6 +64,9 @@ onMounted(async () => {
     <div class="main-video">
       <mwa-main-video :playlist="playList" />
     </div>
+    <div class="trend-video">
+      <trend-videos :playlist="playList" />
+    </div>
     <div
       class="channel"
       v-for="channel in playList"
@@ -97,6 +101,12 @@ onMounted(async () => {
   </div>
 </template>
 <style lang="scss" scoped>
+.trend-video {
+  padding: 0 0 0 120px;
+  overflow: hidden;
+  margin-top: 32px;
+}
+
 .channel {
   padding-top: 56px;
   padding-left: 20px;

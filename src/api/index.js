@@ -17,6 +17,10 @@ const mwa = axios.create({
   baseURL: "https://www.googleapis.com/youtube/v3/",
 });
 
+const mwazzk = axios.create({
+  baseURL: "https://www.googleapis.com/youtube/v3/",
+});
+
 export const getSearchVideos = async (count) => {
   // cost : 100
   try {

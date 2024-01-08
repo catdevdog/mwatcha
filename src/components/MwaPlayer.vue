@@ -65,13 +65,38 @@ const thumbnail = computed(() => {
     transition: 0.3s;
     width: 100%;
     object-fit: cover;
-    opacity: 0.8;
+    opacity: 1;
+    // opacity: 0.05;
   }
   &:hover img {
     transform: translate(-5%, -5%);
     width: 110%;
     transition: 0.3s;
     opacity: 1;
+  }
+  &-large {
+    max-height: none;
+    &:hover img {
+      transform: none;
+      width: 100%;
+    }
+    & + .player-data {
+      font-family: "Pretendard-Thin";
+      margin-top: 8px;
+      color: #fff;
+      letter-spacing: 1.1px;
+      .title {
+        font-size: 18px;
+      }
+      .date-count {
+        margin-top: 4px;
+        font-size: 16px;
+        em {
+          color: #777;
+          font-size: 14px;
+        }
+      }
+    }
   }
 
   @media (max-width: 1280px) {
