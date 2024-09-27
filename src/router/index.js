@@ -6,6 +6,10 @@ const router = createRouter({
     {
       path: "/",
       component: () => import("@/components/layouts/DefaultLayout.vue"),
+      meta: {
+        title: "뫗챠!",
+        description: "마뫄 유튜브 영상 모아보기",
+      },
       children: [
         // main
         {
