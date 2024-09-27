@@ -16,26 +16,46 @@ const router = createRouter({
           path: "/",
           name: "/home",
           component: () => import("@/view/home/IndexPage.vue"),
+          meta: {
+            title: "뫗챠!",
+            description: "마뫄 유튜브 영상 모아보기",
+          },
         },
         {
           path: "/video/:videoId",
           name: "/video",
           component: () => import("@/view/video/IndexPage.vue"),
+          meta: {
+            title: "뫗챠!",
+            description: "마뫄 유튜브 영상 모아보기",
+          },
         },
         {
           path: "/result/:search",
           name: "/result",
           component: () => import("@/view/search/IndexPage.vue"),
+          meta: {
+            title: "뫗챠!",
+            description: "마뫄 유튜브 영상 모아보기",
+          },
         },
         {
           path: "/mamwa",
           name: "/mamwa",
           component: () => import("@/view/mamwa/IndexPage.vue"),
+          meta: {
+            title: "뫗챠!",
+            description: "마뫄 유튜브 영상 모아보기",
+          },
         },
         {
           path: "/dev-page",
           name: "/dev",
           component: () => import("@/view/dev/IndexPage.vue"),
+          meta: {
+            title: "뫗챠!",
+            description: "마뫄 유튜브 영상 모아보기",
+          },
         },
       ],
     },

@@ -94,10 +94,10 @@ onMounted(async () => {
         </div>
       </div>
     </div>
-    <p class="update">
+    <!-- <p class="update">
       최근 업데이트 약 {{ getTimeDiffHour(updateDate) }}시간 전 / 현재
       {{ updateDelay }}시간을 주기로 업데이트 합니다.
-    </p>
+    </p> -->
   </div>
 </template>
 <style lang="scss" scoped>
