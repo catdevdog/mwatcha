@@ -131,7 +131,7 @@ onMounted(async () => {
     background: linear-gradient(
       0deg,
       rgba(0, 0, 0, 1) 5%,
-      rgba(0, 0, 0, 0.7469362745098039) 50%,
+      rgba(0, 0, 0, 0.7469362745098039) 30%,
       rgba(255, 255, 255, 0) 100%
     );
     position: absolute;
