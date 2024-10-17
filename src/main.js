@@ -1,5 +1,6 @@
 import { createApp } from "vue";
 import App from "./App.vue";
+import { createPinia } from "pinia";
 import router from "./router";
 import { initFirebase } from "./firebase";
 import "./assets/styles/common.scss";
@@ -10,5 +11,6 @@ const { analytics, db } = initFirebase();
 const vueApp = createApp(App);
 vueApp.config.globalProperties.$analytics = analytics;
 vueApp.config.globalProperties.$db = db;
+vueApp.use(createPinia());
 vueApp.use(router);
 vueApp.mount("#app");
