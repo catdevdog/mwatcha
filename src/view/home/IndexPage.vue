@@ -108,7 +108,7 @@ onMounted(async () => {
 }
 
 .channel {
-  padding-top: 56px;
+  padding-top: 72px;
   padding-left: 20px;
   &-title {
     display: flex;

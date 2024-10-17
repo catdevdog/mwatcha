@@ -59,6 +59,8 @@ onMounted(async () => {
   padding-bottom: 56.25%;
   position: relative;
   margin-bottom: 72px;
+  border-radius: 16px;
+  overflow: hidden;
 
   iframe {
     position: absolute;
