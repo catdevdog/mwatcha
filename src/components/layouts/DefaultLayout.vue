@@ -34,11 +34,10 @@ const handleChannelClick = async (channel) => {
   store.setCurrentChannel(channel.id);
 };
 
-const handleSearch = async () => {
+const handleSearch = () => {
   if (!searchValue.value.trim()) return;
 
-  await router.push(`/result/${searchValue.value}`);
-  location.reload();
+  router.push(`/result/${searchValue.value}`);
 };
 
 const initializeChannels = async () => {
@@ -89,10 +88,41 @@ const setupScrollHandler = () => {
   });
 };
 
+/**
+ * 모든 비디오 데이터를 수집하여 Pinia 스토어에 저장하는 함수
+ */
+const collectAndStoreVideos = async () => {
+  try {
+    // Firestore의 VIDEOS 컬렉션에서 모든 비디오 데이터 조회
+    const videosRef = collection(db, "VIDEOS");
+    const videosSnapshot = await getDocs(videosRef);
+    const allVideos = videosSnapshot.docs.map((doc) => doc.data());
+
+    // 비디오 스토어에 데이터 저장
+    if (store.allVideos.length === 0) {
+      store.setAllVideos(allVideos);
+      console.log(
+        "모든 비디오 데이터를 스토어에 저장했습니다.",
+        allVideos.length
+      );
+    } else {
+      console.log(
+        "모든 비디오 데이터가 이미 스토어에 저장되어 있습니다.",
+        allVideos.length
+      );
+    }
+  } catch (error) {
+    console.error("비디오 데이터를 수집하는 중 오류 발생:", error);
+  }
+};
+
 // Lifecycle Hooks
 onMounted(async () => {
   await initializeChannels();
   handleInitialRoute();
+
+  // 모든 비디오 데이터를 수집하여 스토어에 저장
+  await collectAndStoreVideos();
 });
 
 onBeforeMount(() => {
@@ -105,9 +135,9 @@ onBeforeMount(() => {
     <!-- Header -->
     <header class="header">
       <div class="logo">
-        <a href="/#home">
+        <router-link to="/#home">
           <img src="@/assets/logo.png" alt="Logo" />
-        </a>
+        </router-link>
       </div>
 
       <!-- Navigation Menu -->
@@ -289,8 +319,8 @@ onBeforeMount(() => {
   margin: 0 auto;
 
   @media (max-width: 1920px) {
-    width: 100%;
-    padding: 0;
+    width: auto;
+    margin: 0 36px;
   }
 
   .playlist {

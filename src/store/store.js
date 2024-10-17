@@ -5,6 +5,8 @@ export const useStore = defineStore("store", {
     currentChannel: null,
     currentPlaylist: null,
     currentVideo: null,
+
+    allVideos: [],
   }),
   actions: {
     setCurrentChannel(channel) {
@@ -16,6 +18,9 @@ export const useStore = defineStore("store", {
     setCurrentVideo(video) {
       this.currentVideo = video;
     },
+    setAllVideos(videos) {
+      this.allVideos = videos;
+    },
   },
   getters: {
     getCurrentChannel() {
@@ -26,6 +31,9 @@ export const useStore = defineStore("store", {
     },
     getCurrentVideo() {
       return this.currentVideo;
+    },
+    getAllVideos() {
+      return this.allVideos;
     },
   },
 });
