@@ -3,7 +3,7 @@ import { getPlayList } from "@/api/index";
 import { getSearchVideos } from "@/api/inquiry";
 import { initFirebase } from "@/firebase";
 import { collection, getDocs } from "firebase/firestore";
-import { onMounted, ref } from "vue";
+import { onMounted, ref, onBeforeMount } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useStore } from "@/store/store.js";
 
@@ -50,15 +50,48 @@ onMounted(async () => {
       };
     })
   );
+  if (route.hash && channelList.value.find((ch) => ch.id === route.hash)) {
+    const hash = route.hash.replace("#", "");
+    store.setCurrentChannel(hash);
+    selectedChannelId.value = hash;
+    if (playList.value.find((ch) => ch.id === hash)) {
+      selectedChannelPlaylist.value = playList.value.find(
+        (ch) => ch.id === hash
+      ).playList;
+      store.setCurrentPlaylist(selectedChannelPlaylist.value[0]);
+    }
+  }
+});
+
+onBeforeMount(() => {
+  window.addEventListener("hashchange", function () {
+    const hash = window.location.hash;
+    if (hash) {
+      const targetElement = document.querySelector(hash);
+      if (targetElement) {
+        // 기본 브라우저의 해시 스크롤 동작 방지
+        event.preventDefault();
+
+        // 원하는 Y 값으로 스크롤 (예: 현재 위치보다 100px 위로 조정)
+        const yOffset = -140; // Y 오프셋 (원하는 값으로 변경 가능)
+        const y =
+          targetElement.getBoundingClientRect().top +
+          window.pageYOffset +
+          yOffset;
+
+        window.scrollTo({ top: y, behavior: "smooth" });
+      }
+    }
+  });
 });
 </script>
 <template>
   <div class="layout">
     <div class="header">
       <div class="logo">
-        <router-link to="/">
+        <a href="/#home">
           <img src="@/assets/logo.png" alt="" />
-        </router-link>
+        </a>
       </div>
       <div class="menu">
         <div
@@ -92,32 +125,23 @@ onMounted(async () => {
       </div>
       <!-- <router-link to="/mamwa"> 젠장 또 마뫄야.. </router-link> -->
     </div>
-    <!-- <div class="nav">
-      <div class="menu">
-        <div class="menu-channel">
-          <button class="menu-title" @click="isSearch = !isSearch">
-            <img src="@/assets/icon-search.svg" alt="" />
-            <p>찾기</p>
-          </button>
-        </div>
-      </div>
-      <hr />
-      <hr />
-      <div class="menu-playlist" v-if="selectedChannelPlaylist.length">
+    <div class="article" id="home">
+      <div class="playlist">
         <ul>
           <li
-            class="playlist"
+            :class="[
+              'playlist',
+              { active: pl.id === store.getCurrentPlaylist.id },
+            ]"
             v-for="pl in selectedChannelPlaylist"
             :key="pl.id"
           >
-            <img src="@/assets/icon-playlist.svg" alt="youtube" />
-            <a :href="`#${pl.id}`">{{ pl.snippet.title }}</a>
+            <a :href="`#${pl.id}`" @click="store.setCurrentPlaylist(pl)">{{
+              pl.snippet.title
+            }}</a>
           </li>
         </ul>
       </div>
-      <div class="developer">catdevdog@gmail.com</div>
-    </div> -->
-    <div class="article">
       <router-view />
     </div>
     <div class="footer" style="color: #fff"></div>
@@ -130,6 +154,9 @@ onMounted(async () => {
   justify-content: space-between;
   align-items: center;
   .search-wrap {
+    @media screen and (max-width: 1280px) {
+      display: none;
+    }
     label {
       display: inline-flex;
       align-items: center;
@@ -177,6 +204,50 @@ onMounted(async () => {
   @media (max-width: 1920px) {
     width: 100%;
     padding: 0px 32px;
+  }
+
+  .playlist {
+    position: sticky;
+    top: 72px;
+    z-index: 10;
+    background-color: #000;
+
+    ul {
+      display: flex;
+      gap: 8px;
+      width: 100%;
+      overflow-x: auto;
+      padding-top: 10px;
+      padding-bottom: 16px;
+
+      //scrollbar
+      // -ms-overflow-style: none; /* IE and Edge */
+      // scrollbar-width: none; /* Firefox */
+      // &::-webkit-scrollbar {
+      //   display: none; /* Chrome, Safari, Opera*/
+      // }
+
+      li {
+        white-space: nowrap;
+        border-radius: 100px;
+        border: 2px solid #2e2e2e;
+        color: #848484;
+        padding: 8px 16px;
+        background-color: #000;
+        font-size: 14px;
+
+        a {
+          line-height: 1.5;
+        }
+
+        &.active {
+          background-color: #fff;
+          color: #000;
+          border: 2px solid #fff;
+          font-family: "Pretendard-Bold";
+        }
+      }
+    }
   }
 }
 
