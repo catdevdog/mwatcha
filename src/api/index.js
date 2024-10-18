@@ -138,40 +138,100 @@ export const getChannelPlaylists = async (param) => {
   }
 };
 
-// YT 모든 데이터 조회
-export const getYouTubeDatas = async (channelId) => {
-  console.log("조회 시작");
-  const playList = await getPlayList(channelId);
-  playList.forEach(async (play) => {
-    await setDoc(doc(db, "PLAYLIST", play.id), {
-      ...play,
-      open: true,
-    }); // PLAYLIST에 입력
-
-    // 재생 목록 기반으로 동영상 조회후 VIDEOS에 입력
-    const videos = await getPlayListVideos(play.id);
-    console.log(videos);
-    videos.forEach(async (video) => {
-      await setDoc(
-        doc(db, "VIDEOS", `${play.id}-${video.contentDetails.videoId}`),
-        {
-          videoId: video.contentDetails.videoId,
-          title: video.snippet.title,
-          date: video.contentDetails.videoPublishedAt,
-          channelTitle: video.snippet.channelTitle,
-          channelId: video.snippet.channelId,
-          playlistId: play.id,
-          commentCount: Number(video.detail.commentCount),
-          favoriteCount: Number(video.detail.favoriteCount),
-          likeCount: Number(video.detail.likeCount),
-          viewCount: Number(video.detail.viewCount),
-          thumbnail: video.snippet.thumbnails,
-        }
-      ); // VIDEOS에 입력
+// 최신 영상만 확인하는 함수 추가
+export const checkLatestVideos = async (channelId, lastUpdateTimestamp) => {
+  try {
+    const response = await mwa.get("search", {
+      params: {
+        part: "id",
+        channelId: channelId,
+        maxResults: 5, // 최신 5개만 확인
+        order: "date",
+        publishedAfter: new Date(lastUpdateTimestamp).toISOString(),
+        key: process.env.VUE_APP_YT_API_KEY,
+      },
     });
-  });
-  onUpdateDt(channelId);
-  console.log("조회 완료");
+
+    return response.data.items.length > 0; // 새 영상이 있으면 true 반환
+  } catch (error) {
+    console.error("최신 영상 확인 중 에러:", error);
+    throw error;
+  }
+};
+
+// API 호출 재시도 로직을 포함한 함수
+const fetchWithRetry = async (apiCall, maxRetries = 3, delay = 1000) => {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await apiCall();
+    } catch (error) {
+      if (i === maxRetries - 1) throw error;
+      await new Promise((resolve) => setTimeout(resolve, delay * (i + 1)));
+    }
+  }
+};
+
+// YT 모든 데이터 조회 - 개선된 버전
+export const getYouTubeDatas = async (channelId, lastUpdateTimestamp) => {
+  console.log("조회 시작");
+  try {
+    // 먼저 새로운 컨텐츠가 있는지 확인
+    const hasNewContent = await checkLatestVideos(
+      channelId,
+      lastUpdateTimestamp
+    );
+
+    if (!hasNewContent) {
+      console.log("새로운 컨텐츠가 없습니다. 업데이트를 건너뜁니다.");
+      return false;
+    }
+
+    const playList = await fetchWithRetry(() => getPlayList(channelId));
+
+    // 재생목록 업데이트를 병렬로 처리
+    await Promise.all(
+      playList.map(async (play) => {
+        await setDoc(doc(db, "PLAYLIST", play.id), {
+          ...play,
+          open: true,
+        });
+
+        const videos = await fetchWithRetry(() => getPlayListVideos(play.id));
+
+        // 영상 데이터 업데이트를 배치로 처리
+        const batch = [];
+        videos.forEach((video) => {
+          batch.push(
+            setDoc(
+              doc(db, "VIDEOS", `${play.id}-${video.contentDetails.videoId}`),
+              {
+                videoId: video.contentDetails.videoId,
+                title: video.snippet.title,
+                date: video.contentDetails.videoPublishedAt,
+                channelTitle: video.snippet.channelTitle,
+                channelId: video.snippet.channelId,
+                playlistId: play.id,
+                commentCount: Number(video.detail.commentCount),
+                favoriteCount: Number(video.detail.favoriteCount),
+                likeCount: Number(video.detail.likeCount),
+                viewCount: Number(video.detail.viewCount),
+                thumbnail: video.snippet.thumbnails,
+              }
+            )
+          );
+        });
+
+        await Promise.all(batch);
+      })
+    );
+
+    await onUpdateDt(channelId);
+    console.log("조회 완료");
+    return true;
+  } catch (error) {
+    console.error("데이터 조회 중 에러 발생:", error);
+    throw error;
+  }
 };
 
 // 채널 id를 받아 재생목록 조회
