@@ -19,6 +19,9 @@ const playList = ref([]); // 모든 채널의 재생목록을 저장할 배열
 const updateDelay = ref(1); // 업데이트 주기 (시간 단위)
 const updateDate = ref(0); // 마지막 업데이트 날짜
 
+// 업데이트 상태를 추적하기 위한 ref
+const updateStatus = ref({});
+
 // Pinia 스토어 인스턴스 생성
 const store = useStore();
 
@@ -26,26 +29,44 @@ const store = useStore();
  * 초기화 함수
  * Firestore에서 채널 데이터를 조회하고, 각 채널의 재생목록을 업데이트 또는 Firestore에서 사용
  */
+
 const init = async () => {
   try {
-    // Firestore에서 CHANNEL_ID 컬렉션 데이터 조회
     const docRef = collection(db, "CHANNEL_ID");
     const docSnap = await getDocs(docRef);
-    docSnap.forEach((item) => {
-      channelList.value.push(item.data());
-    });
 
-    // 각 채널의 재생목록 조회 및 업데이트
+    // 채널 데이터 수집
+    channelList.value = docSnap.docs.map((doc) => doc.data());
+
+    // 각 채널별로 순차적으로 처리
     for (const ch of channelList.value) {
-      if (compareTimestamps(ch.lastUpdateDt, Date.now(), updateDelay.value)) {
-        // 업데이트 주기 내에 업데이트되지 않은 경우 YouTube 데이터 조회 및 Firestore 업데이트
-        await getYouTubeDatas(ch.id);
-      } else {
-        // 업데이트 주기 내에 업데이트된 경우 Firestore 데이터 사용
-        updateDate.value = ch.lastUpdateDt;
-        console.log(
-          `${ch.name} 채널 - ${updateDelay.value}시간 내 업데이트 기록이 있습니다.`
-        );
+      updateStatus.value[ch.id] = "checking";
+
+      try {
+        if (compareTimestamps(ch.lastUpdateDt, Date.now(), updateDelay.value)) {
+          const needsUpdate = await getYouTubeDatas(ch.id, ch.lastUpdateDt);
+
+          if (needsUpdate) {
+            updateStatus.value[ch.id] = "updated";
+            console.log(
+              `${ch.name} 채널 - 새로운 컨텐츠가 업데이트되었습니다.`
+            );
+          } else {
+            updateStatus.value[ch.id] = "skipped";
+            console.log(
+              `${ch.name} 채널 - 새로운 컨텐츠가 없어 업데이트를 건너뜁니다.`
+            );
+          }
+        } else {
+          updateStatus.value[ch.id] = "recent";
+          updateDate.value = ch.lastUpdateDt;
+          console.log(
+            `${ch.name} 채널 - ${updateDelay.value}시간 내 업데이트 기록이 있습니다.`
+          );
+        }
+      } catch (error) {
+        updateStatus.value[ch.id] = "error";
+        console.error(`${ch.name} 채널 업데이트 중 오류 발생:`, error);
       }
     }
   } catch (error) {
@@ -57,15 +78,24 @@ const init = async () => {
 onMounted(async () => {
   await init();
 
-  // 각 채널의 재생목록을 조회하여 playList에 저장
-  playList.value = await Promise.all(
-    channelList.value.map(async (channel) => {
+  // 채널 데이터 로딩을 병렬로 처리
+  const playlistPromises = channelList.value.map(async (channel) => {
+    try {
+      const channelPlaylists = await getPlayList(channel.id);
       return {
         ...channel,
-        playList: await getPlayList(channel.id),
+        playList: channelPlaylists,
       };
-    })
-  );
+    } catch (error) {
+      console.error(`${channel.name} 채널의 재생목록 로딩 중 오류:`, error);
+      return {
+        ...channel,
+        playList: [],
+      };
+    }
+  });
+
+  playList.value = await Promise.all(playlistPromises);
 });
 </script>
 
